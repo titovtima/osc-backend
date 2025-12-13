@@ -97,7 +97,7 @@ func main() {
 			}
 		}
 
-		ch := make(chan EncodedWsMessage, 50)
+		ch := make(chan EncodedWsMessage)
 		wsConnsWrite <- struct{uuid string; ch chan EncodedWsMessage}{uuid, ch}
 		defer func(){ wsConns[uuid] = nil }()
 

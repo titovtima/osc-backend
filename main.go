@@ -40,21 +40,23 @@ func main() {
 
 	oscConnected := false
 	d1.AddMsgHandler("*", func(msg *osc.Message) {
-		storeDataLock.Lock()
-		storeData[msg.Address] = msg.Arguments
-		storeDataLock.Unlock()
-		oscConnected = true
-		
-		b, err := json.Marshal(WsMessage{msg.Address, msg.Arguments})
-		if err != nil {
-			println("error encoding to json: " + err.Error())
-			return
-		}
-		println("from osc: " + string(b))
+		go func (){
+			storeDataLock.Lock()
+			storeData[msg.Address] = msg.Arguments
+			storeDataLock.Unlock()
+			oscConnected = true
+			
+			b, err := json.Marshal(WsMessage{msg.Address, msg.Arguments})
+			if err != nil {
+				println("error encoding to json: " + err.Error())
+				return
+			}
+			println("from osc: " + string(b))
 
-		for _, conn := range wsConns {
-			conn <- b
-		}
+			for _, conn := range wsConns {
+				conn <- b
+			}
+		}()
 	})
 
 	go app1.ListenAndServe()
@@ -153,6 +155,11 @@ func main() {
 				}
 			}
 		}()
+
+		for addr, args := range storeData {
+			sendWsMessage := WsMessage{addr, args}
+			ch <- encodeWs(sendWsMessage)
+		}
 
 		for {
 			time.Sleep(time.Minute)

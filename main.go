@@ -38,10 +38,12 @@ func main() {
 		}
 	}()
 
+	oscConnected := false
 	d1.AddMsgHandler("*", func(msg *osc.Message) {
 		storeDataLock.Lock()
 		storeData[msg.Address] = msg.Arguments
 		storeDataLock.Unlock()
+		oscConnected = true
 		
 		b, err := json.Marshal(WsMessage{msg.Address, msg.Arguments})
 		if err != nil {
@@ -59,16 +61,21 @@ func main() {
 
 	// app1.SendMsg("/console/ping")
 
-	if config.Console.Series == "sd" {
-		for ch := 1; ch <= config.MaxChannel; ch++ {
-			for aux := 1; aux <= config.MaxAux; aux++ {
-				app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_level/?")
-				app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_pan/?")
+	go func ()  {
+		for !oscConnected {
+			if config.Console.Series == "sd" {
+				for ch := 1; ch <= config.MaxChannel; ch++ {
+					for aux := 1; aux <= config.MaxAux; aux++ {
+						app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_level/?")
+						app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_pan/?")
+					}
+				}
+			} else if config.Console.Series == "s" {
+				app1.SendMsg("/console/resend")
 			}
+			time.Sleep(10 * time.Second)
 		}
-	} else if config.Console.Series == "s" {
-		app1.SendMsg("/console/resend")
-	}
+	}()
 
 	readChannelsData()
 	httpChannelsDataRoutes()

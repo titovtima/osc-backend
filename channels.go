@@ -110,6 +110,12 @@ func httpChannelsDataRoutes() {
 			}
 			channelsData.Channels = channels.Channels
 			writeChannelsFile <- true
+			wsMessage := encodeWs(WsMessage{"channels", []any{channels}})
+			go func() {
+				for _, ws := range wsConns {
+					ws <- wsMessage
+				}
+			}()
 			w.WriteHeader(200)
 			return
 		}

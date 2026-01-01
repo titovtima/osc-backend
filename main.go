@@ -18,6 +18,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var wsConns = make(map[string]chan EncodedWsMessage)
 func main() {
 	config := readConfig("data/config.yaml")
 
@@ -29,8 +30,7 @@ func main() {
 	app1.NewConn(localUdpAddr, deskUdpAddr)
 
 	// var wsConns = make(map[string]chan string)
-	wsConns := make(map[string]chan EncodedWsMessage)
-	wsConnsWrite := make(chan struct{uuid string; ch chan EncodedWsMessage}, 10)
+	wsConnsWrite := make(chan struct{uuid string; ch chan EncodedWsMessage})
 	go func () {
 		for {
 			write := <- wsConnsWrite

@@ -6,4 +6,6 @@ httpServerPort: 8002
 oscListenPort: 9100
 maxChannel: 80
 maxAux: 32
+dev: true
 backendHost: 192.168.1.109
+# backendHost: 127.0.0.1

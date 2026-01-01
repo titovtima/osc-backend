@@ -61,9 +61,27 @@ func main() {
 
 	go app1.ListenAndServe()
 
-	// app1.SendMsg("/console/ping")
+	readChannelsData()
+	httpChannelsDataRoutes()
+	httpServeConfig(config)
 
-	go func ()  {
+	if config.Dev {
+		go func () {
+			for !oscConnected {
+				if config.Console.Series == "sd" {
+					for ch := 1; ch <= config.MaxChannel; ch++ {
+						for aux := 1; aux <= config.MaxAux; aux++ {
+							app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_level/?")
+							app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_pan/?")
+						}
+					}
+				} else if config.Console.Series == "s" {
+					app1.SendMsg("/console/resend")
+				}
+				time.Sleep(10 * time.Second)
+			}
+		}()
+	} else {
 		for !oscConnected {
 			if config.Console.Series == "sd" {
 				for ch := 1; ch <= config.MaxChannel; ch++ {
@@ -77,11 +95,7 @@ func main() {
 			}
 			time.Sleep(10 * time.Second)
 		}
-	}()
-
-	readChannelsData()
-	httpChannelsDataRoutes()
-	httpServeConfig(config)
+	}
 
 	var upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -216,6 +230,7 @@ type Config struct {
 	MaxChannel     int           `json:"maxChannel"`
 	MaxAux         int           `json:"maxAux"`
 	BackendHost    string        `json:"backendHost"`
+	Dev            bool          `json:"dev"`
 }
 
 type ConsoleConfig struct {
@@ -277,9 +292,13 @@ func readConfig(filepath string) Config {
 	if p, ok := data["backendHost"]; ok {
 		backendHost = p.(string)
 	}
+	dev := false
+	if p, ok := data["dev"]; ok {
+		dev = p.(bool)
+	}
 
     return Config{ConsoleConfig{series, consoleHost.(string), consoleOscReceivePort}, 
-		httpServerPort, oscListenPort, maxChannel, maxAux, backendHost}
+		httpServerPort, oscListenPort, maxChannel, maxAux, backendHost, dev}
 }
 
 func httpServeConfig(config Config) {

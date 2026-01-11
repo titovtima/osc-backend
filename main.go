@@ -95,6 +95,16 @@ func main() {
 			}
 			time.Sleep(10 * time.Second)
 		}
+		if config.Console.Series == "sd" {
+			for ch := 1; ch <= config.MaxChannel; ch++ {
+				for aux := 1; aux <= config.MaxAux; aux++ {
+					app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_level/?")
+					app1.SendMsg("/sd/Input_Channels/" + strconv.Itoa(ch) + "/Aux_Send/" + strconv.Itoa(aux) + "/send_pan/?")
+				}
+			}
+		} else if config.Console.Series == "s" {
+			app1.SendMsg("/console/resend")
+		}
 	}
 
 	var upgrader = websocket.Upgrader{

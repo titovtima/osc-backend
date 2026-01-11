@@ -180,6 +180,8 @@ func main() {
 			}
 		}()
 
+		ch <- encodeWs(WsMessage{"channels", []any{channelsData.Channels}})
+
 		for addr, args := range storeData {
 			sendWsMessage := WsMessage{addr, args}
 			ch <- encodeWs(sendWsMessage)
